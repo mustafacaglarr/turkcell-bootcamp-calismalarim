@@ -1,63 +1,71 @@
 package com.turkcell.bootcamp.libraryapp.ui.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.turkcell.bootcamp.libraryapp.data.model.User
-import com.turkcell.bootcamp.libraryapp.data.repository.UserRepository
+import androidx.lifecycle.viewModelScope
+import com.turkcell.bootcamp.libraryapp.data.model.Profile
+import com.turkcell.bootcamp.libraryapp.data.repository.AuthRepository
+import com.turkcell.bootcamp.libraryapp.data.supabase.supabase
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
-class AuthViewModel : ViewModel() {
-    private val repository = UserRepository()
+// Sistem bu 4Ã¼nden birinde olabilir.
+sealed class AuthState {
+    object Idle : AuthState()
+    object Loading : AuthState()
+    data class Success(val role: String) : AuthState()
+    data class Error(val message: String) : AuthState()
+}
 
-    var email by mutableStateOf("")
-        private set
-    var password by mutableStateOf("")
-        private set
-    var name by mutableStateOf("")
-        private set
-    var loginError by mutableStateOf<String?>(null)
-    var registrationError by mutableStateOf<String?>(null)
 
-    fun updateEmail(value: String) {
-        email = value
+class AuthViewModel : ViewModel()
+{
+    private val repository = AuthRepository()
+
+    private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
+    val authState: StateFlow<AuthState> = _authState;
+
+    private val _profile = MutableStateFlow<Profile?>(null)
+    val profile: StateFlow<Profile?> = _profile;
+
+    fun signIn(email: String, password: String)
+    {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            repository
+                .signIn(email, password)
+                .onSuccess {
+                    val userId = repository.getCurrentUserId(); // userId Geliyo mu?
+                    if(userId != null)
+                    {
+                        val profile = repository.getProfile(userId); // profile geliyo mu?
+                        _profile.value = profile; // doÄŸru set ediliyor mu?
+                        _authState.value = AuthState.Success("student")
+                    }else{
+                        _authState.value = AuthState.Error("Profil bulunamadÄ±.")
+                    }
+                }
+                .onFailure { ex -> _authState.value = AuthState.Error(ex.message ?: "GiriÅŸ baÅŸarÄ±sÄ±z") }
+        }
     }
 
-    fun updatePassword(value: String) {
-        password = value
-    }
-
-    fun updateName(value: String) {
-        name = value
-    }
-
-    fun login(onSuccess: () -> Unit) {
-        if (email.isBlank() || password.isBlank()) {
-            loginError = "E-posta ve parola gereklidir"
-            return
-        }
-
-        val user = repository.authenticate(email, password)
-        if (user != null) {
-            loginError = null
-            onSuccess()
-        } else {
-            loginError = "Giriş bilgileri yanlış"
+    fun signUp(
+        email: String,
+        password: String,
+        fullName: String,
+        studentNo: String?
+    ) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            repository
+                .signUp(email, password, fullName, studentNo)
+                .onSuccess { result -> _authState.value = AuthState.Success("student") }
+                .onFailure { ex -> _authState.value = AuthState.Error(ex.message ?: "KayÄ±t baÅŸarÄ±sÄ±z") }
         }
     }
 
-    fun register(onSuccess: () -> Unit) {
-        if (name.isBlank() || email.isBlank() || password.isBlank()) {
-            registrationError = "Lütfen tüm alanları doldurun"
-            return
-        }
-
-        val result = repository.register(User(name, email, password))
-        if (result) {
-            registrationError = null
-            onSuccess()
-        } else {
-            registrationError = "Bu e-posta zaten kayıtlı"
-        }
+    fun resetState() {
+        _authState.value = AuthState.Idle;
     }
 }

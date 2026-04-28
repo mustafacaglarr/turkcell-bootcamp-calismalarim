@@ -2,79 +2,114 @@ package com.turkcell.bootcamp.libraryapp.ui.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.turkcell.bootcamp.libraryapp.ui.viewmodel.AuthState
+import com.turkcell.bootcamp.libraryapp.ui.viewmodel.AuthViewModel
+import io.github.jan.supabase.auth.Auth
 
+
+// TODO: KayÄ±t ol sayfasÄ± tasarlamak.
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit,
-    onRegisterClick: () -> Unit
+    onNavigateToRegister: () -> Unit,
+    onLoginSuccess: (role:String) -> Unit,
+    authViewModel: AuthViewModel
 ) {
-    val emailState = remember { mutableStateOf("") }
-    val passwordState = remember { mutableStateOf("") }
-    val errorState = remember { mutableStateOf<String?>(null) }
+    val authState by authViewModel.authState.collectAsState()
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+
+    // YalnÄ±zca authState deÄŸiÅŸirse Ã§alÄ±ÅŸ, tÃ¼m recompositionlarda deÄŸil..
+    LaunchedEffect(authState) {
+        if(authState is AuthState.Success)
+        {
+            onLoginSuccess((authState as AuthState.Success).role)
+            authViewModel.resetState()
+        }
+    }
+
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "Kütüphane Girişi", modifier = Modifier.padding(top = 16.dp))
-
+        Text("KÃ¼tÃ¼phane Sistemi")
+        Spacer(modifier =  Modifier.height(8.dp))
+        Text("GiriÅŸ Yap")
         OutlinedTextField(
-            value = emailState.value,
-            onValueChange = { emailState.value = it },
-            label = { Text("E-posta") },
-            singleLine = true,
+            enabled = authState !is AuthState.Loading,
             modifier = Modifier.fillMaxWidth(),
+            value=email,
+            label = {Text("E-posta")},
+            onValueChange = {value -> email = value},
+            singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
         )
-
+        Spacer(modifier = Modifier.height(10.dp))
         OutlinedTextField(
-            value = passwordState.value,
-            onValueChange = { passwordState.value = it },
-            label = { Text("Parola") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
+            enabled = authState !is AuthState.Loading,
             modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+            value=password,
+            label = {Text("Åifre")},
+            onValueChange = {value -> password = value},
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            visualTransformation = PasswordVisualTransformation()
         )
+        Spacer(modifier = Modifier.height(10.dp))
 
-        Button(
-            onClick = {
-                if (emailState.value.isBlank() || passwordState.value.isBlank()) {
-                    errorState.value = "Lütfen tüm alanları doldurun"
-                } else {
-                    errorState.value = null
-                    onLoginSuccess()
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Giriş Yap")
+        if(authState is AuthState.Loading)
+        {
+            Button(onClick = {}, modifier = Modifier.fillMaxWidth()) {
+                CircularProgressIndicator(modifier=Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary)
+            }
+        }else {
+            Button(onClick = {
+                authViewModel.signIn(email, password)
+            }, modifier = Modifier.fillMaxWidth()) {
+                Text("GiriÅŸ Yap")
+            }
         }
 
-        TextButton(onClick = onRegisterClick, modifier = Modifier.fillMaxWidth()) {
-            Text("Hesap oluştur")
+        TextButton(onClick = {
+            onNavigateToRegister()
+        },) {
+            Text("HesabÄ±nÄ±z yok mu? KayÄ±t Ol")
         }
 
-        errorState.value?.let {
-            Text(text = it, color = androidx.compose.material3.MaterialTheme.colorScheme.error)
-        }
+
+        if(authState is AuthState.Success)
+            Text("GiriÅŸ YapÄ±ldÄ±")
+        else if(authState is AuthState.Error)
+            Text((authState as AuthState.Error).message)
     }
 }

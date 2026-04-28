@@ -1,87 +1,123 @@
 package com.turkcell.bootcamp.libraryapp.ui.screen
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.turkcell.bootcamp.libraryapp.ui.viewmodel.AuthState
+import com.turkcell.bootcamp.libraryapp.ui.viewmodel.AuthViewModel
 
 @Composable
 fun RegisterScreen(
-    onRegisterSuccess: () -> Unit,
-    onCancel: () -> Unit
+    onNavigateToLogin: () -> Unit,
+    authViewModel: AuthViewModel
 ) {
-    val nameState = remember { mutableStateOf("") }
-    val emailState = remember { mutableStateOf("") }
-    val passwordState = remember { mutableStateOf("") }
-    val errorState = remember { mutableStateOf<String?>(null) }
+    val authState by authViewModel.authState.collectAsState()
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var fullName by remember { mutableStateOf("") }
+    var studentNo by remember { mutableStateOf("") }
+
 
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "Yeni Hesap Oluştur")
+        Text(
+            text = "KayÄ±t Ol",
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(32.dp))
 
         OutlinedTextField(
-            value = nameState.value,
-            onValueChange = { nameState.value = it },
+            value = fullName,
+            onValueChange = { fullName = it },
             label = { Text("Ad Soyad") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
+        Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
-            value = emailState.value,
-            onValueChange = { emailState.value = it },
+            value = email,
+            onValueChange = { email = it },
             label = { Text("E-posta") },
-            singleLine = true,
             modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            singleLine = true
         )
+        Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
-            value = passwordState.value,
-            onValueChange = { passwordState.value = it },
-            label = { Text("Parola") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Åifre") },
             modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            singleLine = true
         )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = studentNo,
+            onValueChange = { studentNo = it },
+            label = { Text("Ã–ÄŸrenci No (opsiyonel)") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (authState is AuthState.Error) {
+            Text(
+                text = (authState as AuthState.Error).message,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+        }
 
         Button(
             onClick = {
-                if (nameState.value.isBlank() || emailState.value.isBlank() || passwordState.value.isBlank()) {
-                    errorState.value = "Lütfen tüm alanları doldurun"
-                } else {
-                    errorState.value = null
-                    onRegisterSuccess()
-                }
+                authViewModel.signUp(
+                    email = email.trim(),
+                    password = password,
+                    fullName = fullName.trim(),
+                    studentNo = studentNo.trim().ifEmpty { null }
+                )
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = authState !is AuthState.Loading
         ) {
-            Text("Kayıt Ol")
+            if (authState is AuthState.Loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            } else {
+                Text("KayÄ±t Ol")
+            }
         }
+        Spacer(modifier = Modifier.height(12.dp))
 
-        TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
-            Text("Geri dön")
-        }
-
-        errorState.value?.let {
-            Text(text = it, color = androidx.compose.material3.MaterialTheme.colorScheme.error)
+        TextButton(onClick = {onNavigateToLogin()}) {
+            Text("Zaten hesabÄ±n var mÄ±? GiriÅŸ Yap")
         }
     }
 }
