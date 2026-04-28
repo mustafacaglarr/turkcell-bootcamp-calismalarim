@@ -1,6 +1,5 @@
 package com.turkcell.bootcamp.libraryapp.ui.navigation
 
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -32,7 +31,11 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
         ) }
         // Ã–DEV 1: KayÄ±t ol'a success yapÄ±sÄ± kurulacak.
         composable(Screen.Register.route) { RegisterScreen(
-            onNavigateToLogin = { navController.navigate(Screen.Login.route) },
+            onNavigateToLogin = {
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(Screen.Register.route) { inclusive = true }
+                }
+            },
             authViewModel
         ) }
         composable(Screen.Homepage.route) {

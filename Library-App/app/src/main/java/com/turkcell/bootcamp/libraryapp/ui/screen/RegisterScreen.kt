@@ -13,7 +13,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.turkcell.bootcamp.libraryapp.ui.viewmodel.AuthState
 import com.turkcell.bootcamp.libraryapp.ui.viewmodel.AuthViewModel
 
@@ -28,6 +27,12 @@ fun RegisterScreen(
     var fullName by remember { mutableStateOf("") }
     var studentNo by remember { mutableStateOf("") }
 
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Success) {
+            onNavigateToLogin()
+            authViewModel.resetState()
+        }
+    }
 
     Column(
         modifier = Modifier
