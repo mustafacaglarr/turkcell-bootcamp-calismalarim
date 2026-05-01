@@ -34,6 +34,9 @@ class AuthRepository
             Profile(userId, "student", fullName, studentNo)
         )
     }
+    suspend fun signOut() {
+        supabase.auth.signOut()
+    }
 
     fun getCurrentUserId() : String?
     {
