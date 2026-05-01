@@ -7,8 +7,8 @@ import io.github.jan.supabase.postgrest.postgrest
 class BookRepository {
     suspend fun getAllBooks(): Result<List<Book>> = runCatching {
         supabase.postgrest["books"]
-                .select()
-                .decodeList<Book>()
+            .select()
+            .decodeList<Book>()
     }
 
     suspend fun getBookById(id:String): Result<Book> = runCatching {
@@ -21,5 +21,34 @@ class BookRepository {
         supabase.postgrest["books"].insert(book)
     }
 
-    // Ã–DEV 2: BookRepository GÃ¼ncelleme, silme, arama fonksiyonlarÄ±nÄ± tanÄ±mla.
+    suspend fun updateBook(book: Book): Result<Unit> = runCatching {
+        supabase.postgrest["books"]
+            .update(book) {
+                filter { eq("id", book.id) }
+            }
+    }
+
+    suspend fun deleteBook(id: String): Result<Unit> = runCatching {
+        supabase.postgrest["books"]
+            .delete {
+                filter { eq("id", id) }
+            }
+    }
+
+    suspend fun searchBooks(query: String): Result<List<Book>> = runCatching {
+        val searchText = "%${query.trim()}%"
+
+        supabase.postgrest["books"]
+            .select {
+                filter {
+                    or {
+                        ilike("title", searchText)
+                        ilike("author", searchText)
+                        ilike("isbn", searchText)
+                        ilike("category", searchText)
+                    }
+                }
+            }
+            .decodeList<Book>()
+    }
 }
