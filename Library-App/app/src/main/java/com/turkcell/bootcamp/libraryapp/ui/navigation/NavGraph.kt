@@ -9,6 +9,7 @@ import androidx.navigation.compose.rememberNavController
 import com.turkcell.bootcamp.libraryapp.ui.screen.RegisterScreen
 import com.turkcell.bootcamp.libraryapp.ui.screen.HomeScreen
 import com.turkcell.bootcamp.libraryapp.ui.screen.LoginScreen
+import com.turkcell.bootcamp.libraryapp.ui.screen.BorrowRecordsScreen
 import com.turkcell.bootcamp.libraryapp.ui.screen.SplashScreen
 import com.turkcell.bootcamp.libraryapp.ui.viewmodel.AuthViewModel
 import com.turkcell.bootcamp.libraryapp.ui.viewmodel.BookViewModel
@@ -55,7 +56,20 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
             authViewModel
         ) }
         composable(Screen.Homepage.route) {
-            HomeScreen(authViewModel, bookViewModel)
+            HomeScreen(
+                authViewModel = authViewModel,
+                bookViewModel = bookViewModel,
+                onNavigateToBorrowRecords = {
+                    navController.navigate(Screen.BorrowRecords.route)
+                }
+            )
+        }
+        composable(Screen.BorrowRecords.route) {
+            BorrowRecordsScreen(
+                authViewModel = authViewModel,
+                bookViewModel = bookViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }
