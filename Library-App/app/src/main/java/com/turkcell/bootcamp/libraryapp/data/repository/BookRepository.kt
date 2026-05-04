@@ -2,7 +2,6 @@ package com.turkcell.bootcamp.libraryapp.data.repository
 
 import com.turkcell.bootcamp.libraryapp.data.model.Book
 import com.turkcell.bootcamp.libraryapp.data.model.BorrowRecord
-import com.turkcell.bootcamp.libraryapp.data.model.BorrowRecordInsert
 import com.turkcell.bootcamp.libraryapp.data.supabase.*
 import io.github.jan.supabase.postgrest.postgrest
 
@@ -56,7 +55,7 @@ class BookRepository {
             .decodeList<Book>()
     }
 
-    suspend fun borrowBook(record: BorrowRecordInsert): Result<Unit> = runCatching {
+    suspend fun borrowBook(record: BorrowRecord): Result<Unit> = runCatching {
         val book = getBookById(record.bookId).getOrThrow()
         if (book.avaiableCopies <= 0) error("Kitap stokta yok.")
 

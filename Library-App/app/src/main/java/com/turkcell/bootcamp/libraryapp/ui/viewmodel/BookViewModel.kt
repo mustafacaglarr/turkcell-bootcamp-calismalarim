@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.turkcell.bootcamp.libraryapp.data.model.Book
 import com.turkcell.bootcamp.libraryapp.data.model.BorrowRecord
-import com.turkcell.bootcamp.libraryapp.data.model.BorrowRecordInsert
 import com.turkcell.bootcamp.libraryapp.data.repository.BookRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,7 +64,7 @@ class BookViewModel : ViewModel() {
                 add(Calendar.DAY_OF_YEAR, dayCount)
             }
 
-            val record = BorrowRecordInsert(
+            val record = BorrowRecord(
                 studentId = studentId,
                 bookId = book.id,
                 borrowedAt = dateFormat.format(borrowedAt.time),

@@ -12,11 +12,3 @@ data class BorrowRecord(
     @SerialName("due_date") val dueDate: String = "",
     @SerialName("returned_at") val returnedAt: String? = null
 )
-
-@Serializable
-data class BorrowRecordInsert(
-    @SerialName("student_id") val studentId: String,
-    @SerialName("book_id") val bookId: String,
-    @SerialName("borrowed_at") val borrowedAt: String,
-    @SerialName("due_date") val dueDate: String
-)
